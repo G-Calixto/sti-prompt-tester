@@ -41,6 +41,7 @@ npm run dev
 
 - Lista todos os testes salvos
 - Ver detalhes completos de cada teste
+- Abrir um teste salvo no criador para visualizar, editar e salvar como uma nova cópia
 - Copiar ID ou prompt individualmente
 - Excluir registro
 - Importar um teste, um array ou um objeto com a chave `tests`
