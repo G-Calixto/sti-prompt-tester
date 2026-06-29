@@ -314,6 +314,16 @@
 .warn-msg { color: #7a5200; background: #fff8e1; border: 1px solid #ffe082; border-radius: var(--radius-sm); padding: 8px 10px; font-size: 12px; margin-top: 8px; }
 .field-help { color: var(--text-muted); font-size: 11px; margin-top: 6px; }
 .legacy-notice { color: #7a5200; background: #fff8e1; border-radius: var(--radius-sm); padding: 6px 8px; font-size: 11px; margin-bottom: 8px; }
+.loaded-history-banner {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 18px;
+  color: #4b3a00; background: #fff8dd; border: 1px solid #ead17a;
+  border-left: 4px solid #c47a10; border-radius: var(--radius); padding: 14px 16px;
+}
+.loaded-history-banner strong { display: block; font-size: 13px; margin-bottom: 4px; }
+.loaded-history-banner p { font-size: 12px; line-height: 1.45; margin-bottom: 6px; }
+.loaded-history-banner code { font-size: 11px; word-break: break-all; }
+.loaded-history-banner .loaded-history-legacy { color: #7a3900; font-weight: 600; margin: 9px 0 0; }
+@media(max-width:600px){ .loaded-history-banner { flex-direction: column; } }
 
 /* ── HISTÓRICO ── */
 .hist-item {

@@ -197,6 +197,13 @@ function idSemConflito(id, idsUsados) {
   return `${id}_DUPLICADO_${numero}`;
 }
 
+function idCopiaSemConflito(id, idsUsados) {
+  if (!idsUsados.has(id)) return id;
+  let numero = 1;
+  while (idsUsados.has(`${id}_COPIA_${numero}`)) numero += 1;
+  return `${id}_COPIA_${numero}`;
+}
+
 // ── MODAL ─────────────────────────────────────────────────────────────────────
 function Modal({ onClose, children }) {
   return (
@@ -229,6 +236,8 @@ export default function App() {
   const [codigoInput, setCodigoInput] = useState('');
   const [codigoErr, setCodigoErr] = useState('');
   const [showPromptRaw, setShowPromptRaw] = useState(false);
+  const [loadedFromHistory, setLoadedFromHistory] = useState(false);
+  const [loadedHistoryTestId, setLoadedHistoryTestId] = useState(null);
   // Modals
   const [modalExportarPos, setModalExportarPos] = useState(false); // após salvar
   const [modalExportarHist, setModalExportarHist] = useState(false); // histórico
@@ -244,6 +253,46 @@ export default function App() {
     setCodigoInput(''); setCodigoErr('');
     setComeco(DEFAULT_TEXTS[q.status].comeco);
     setFinalText(DEFAULT_TEXTS[q.status].final);
+    setLoadedFromHistory(false); setLoadedHistoryTestId(null);
+  };
+
+  const loadTestIntoBuilder = (teste) => {
+    const questaoSalva = teste.questao && typeof teste.questao === 'object' ? teste.questao : {};
+    const nomePeloId = String(teste.id || '').match(/^(.*?)_CP/)?.[1] || '';
+    const nomeQuestao = questaoSalva.nome || teste.nome_questao || nomePeloId;
+    const questaoAtual = questoes.find(q => q.nome === nomeQuestao);
+    const statusSugerido = teste.status || questaoSalva.status || questaoAtual?.status || (nomeQuestao.startsWith('incorreta_') ? 'incorreta' : 'correta');
+    const status = statusSugerido === 'incorreta' ? 'incorreta' : 'correta';
+    const questaoCarregada = questaoAtual || {
+      enunciado: '',
+      desenvolvimento_aluno: '',
+      resposta_aluno: '',
+      resposta_correta: '',
+      ...questaoSalva,
+      nome: nomeQuestao || 'questao_importada',
+      status,
+    };
+    const respostasSalvas = teste.respostas_questionario && typeof teste.respostas_questionario === 'object'
+      ? { ...teste.respostas_questionario }
+      : {};
+    const promptSalvo = typeof teste.prompt_final === 'string' ? teste.prompt_final : '';
+
+    setQuestaoSel(questaoCarregada);
+    setRespostas(respostasSalvas);
+    setObs(String(teste.observacao_professor || '').slice(0, 300));
+    setRotulo(String(teste.rotulo_curto || '').slice(0, 25));
+    setComeco(typeof teste.comeco_prompt === 'string' ? teste.comeco_prompt : DEFAULT_TEXTS[status].comeco);
+    setFinalText(typeof teste.final_prompt === 'string' ? teste.final_prompt : DEFAULT_TEXTS[status].final);
+    setContextoStr(typeof teste.contexto_aluno_gerado === 'string' ? teste.contexto_aluno_gerado : '');
+    setDadosQuestaoStr(buildDadosQuestao(questaoCarregada));
+    setPromptFinal(promptSalvo);
+    setRespostaIA(typeof teste.resposta_ia === 'string' ? teste.resposta_ia : '');
+    setCodigoInput(buildCodigoLive(questaoCarregada, respostasSalvas));
+    setCodigoErr(''); setErrors([]); setSaveWarn('');
+    setShowPromptRaw(Boolean(promptSalvo));
+    setLoadedFromHistory(true); setLoadedHistoryTestId(String(teste.id));
+    setActiveTab('form'); setViewItem(null);
+    window.scrollTo({ top:0, behavior:'smooth' });
   };
 
   const handleResposta = (id, letra) => {
@@ -304,8 +353,17 @@ export default function App() {
     setCodigoErr('');
     setShowPromptRaw(false);
     setModalExportarPos(false);
+    setLoadedFromHistory(false);
+    setLoadedHistoryTestId(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
     showToast('Pronto para um novo teste!');
+  };
+
+  const getIdParaSalvar = (idBase) => {
+    if (!loadedFromHistory) return idBase;
+    const idsOcupados = new Set(history.map(item => item.id));
+    if (loadedHistoryTestId) idsOcupados.add(loadedHistoryTestId);
+    return idCopiaSemConflito(idBase, idsOcupados);
   };
 
   const handleSalvar = () => {
@@ -313,7 +371,8 @@ export default function App() {
     if (obs.length > 300) { setSaveWarn('A observação deve ter no máximo 300 caracteres.'); return; }
     setSaveWarn('');
     const warnIA = !respostaIA.trim();
-    const id = buildId(questaoSel, respostas, rotulo);
+    const idBase = buildId(questaoSel, respostas, rotulo);
+    const id = getIdParaSalvar(idBase);
     const contexto = buildContexto(questaoSel, respostas, obs);
     const registro = {
       id, schema_version:2, questionario_version:'2026-06-novo-questionario', criado_em: new Date().toISOString(),
@@ -453,6 +512,20 @@ export default function App() {
       {/* ── ABA: NOVO TESTE ── */}
       {activeTab === 'form' && (
         <main className="main-content">
+
+          {loadedFromHistory && (
+            <section className="loaded-history-banner">
+              <div>
+                <strong>Teste carregado do histórico</strong>
+                <p>Você está visualizando um teste salvo do histórico. Alterações feitas aqui não modificam o registro original até que você salve novamente.</p>
+                <code>Teste carregado: {loadedHistoryTestId}</code>
+                {(history.find(item => item.id === loadedHistoryTestId)?.schema_version ?? 1) === 1 && (
+                  <p className="loaded-history-legacy">Este teste usa uma versão antiga do questionário. Algumas respostas podem não preencher os campos atuais.</p>
+                )}
+              </div>
+              <button className="btn btn-ghost btn-sm" onClick={handleRecomecar}>Limpar e começar novo teste</button>
+            </section>
+          )}
 
           {/* BLOCO 1 */}
           <section className="block block-selecao">
@@ -623,10 +696,10 @@ export default function App() {
                 </div>
                 <div className="save-id-preview">
                   <label className="field-label-block">ID gerado</label>
-                  <code className="id-preview">{buildId(questaoSel,respostas,rotulo)||'—'}</code>
+                  <code className="id-preview">{getIdParaSalvar(buildId(questaoSel,respostas,rotulo))||'—'}</code>
                 </div>
               </div>
-              <button className="btn btn-accent" onClick={handleSalvar}>Salvar teste</button>
+              <button className="btn btn-accent" onClick={handleSalvar}>{loadedFromHistory ? 'Salvar como novo teste' : 'Salvar teste'}</button>
               {saveWarn && <p className="warn-msg">{saveWarn}</p>}
             </section>
           )}
@@ -670,6 +743,7 @@ export default function App() {
                 {(item.schema_version ?? 1) === 1 && <p className="legacy-notice">Este teste usa a versão antiga do questionário.</p>}
                 <div className="hist-actions">
                   <button className="btn btn-ghost btn-xs" onClick={()=>setViewItem(viewItem?.id===item.id?null:item)}>{viewItem?.id===item.id?'Fechar':'Ver'}</button>
+                  <button className="btn btn-primary btn-xs" onClick={()=>loadTestIntoBuilder(item)}>Abrir no criador</button>
                   <button className="btn btn-ghost btn-xs" onClick={()=>navigator.clipboard.writeText(item.id).then(()=>showToast('ID copiado!'))}>Copiar ID</button>
                   <button className="btn btn-ghost btn-xs" onClick={()=>navigator.clipboard.writeText(item.prompt_final || item.contexto_aluno_gerado || '').then(()=>showToast('Prompt copiado!'))}>Copiar prompt</button>
                   <button className="btn btn-ghost btn-xs" onClick={()=>downloadJson([item], `${item.id}.json`)}>Exportar este</button>
