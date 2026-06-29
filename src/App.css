@@ -312,6 +312,8 @@
 /* ── ERRORS / WARNINGS ── */
 .err { color: var(--incorreta); font-size: 12px; margin-top: 5px; }
 .warn-msg { color: #7a5200; background: #fff8e1; border: 1px solid #ffe082; border-radius: var(--radius-sm); padding: 8px 10px; font-size: 12px; margin-top: 8px; }
+.field-help { color: var(--text-muted); font-size: 11px; margin-top: 6px; }
+.legacy-notice { color: #7a5200; background: #fff8e1; border-radius: var(--radius-sm); padding: 6px 8px; font-size: 11px; margin-bottom: 8px; }
 
 /* ── HISTÓRICO ── */
 .hist-item {

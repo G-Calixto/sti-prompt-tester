@@ -31,7 +31,7 @@ npm run dev
 1. **Seleção da questão** — escolha entre 6 questões (3 corretas, 3 incorretas)
 2. **Dados da questão** — exibe enunciado, desenvolvimento e respostas
 3. **Questionário pedagógico** — muda automaticamente conforme o status (correta/incorreta)
-4. **Código ao vivo** — exibe o código das respostas marcadas em tempo real (ex: `CP1A2B_DSP1C_PEE1B2A3C`)
+4. **Código ao vivo** — exibe o código das respostas marcadas em tempo real (ex: `CP1A2B3D_DSP1C_PEE1A2E3B`)
 5. **Edição começo/final do prompt** — preenchidos automaticamente, editáveis; botão para restaurar padrão
 6. **Prompt final** — textarea editável + botão copiar
 7. **Resposta da IA** — campo para colar a resposta
@@ -43,7 +43,9 @@ npm run dev
 - Ver detalhes completos de cada teste
 - Copiar ID ou prompt individualmente
 - Excluir registro
-- Exportar todos os testes em JSON
+- Importar um teste, um array ou um objeto com a chave `tests`
+- Exportar testes antigos e novos em JSON
+- Preservar IDs repetidos com o sufixo `_DUPLICADO_N`
 
 ---
 
@@ -51,15 +53,17 @@ npm run dev
 
 **Questão incorreta:**
 ```
-nome_questao_CP1{A|B}2{A|B|C}_DSP1{A|B|C}2{A|B|C}3{A|B|C|D}_PEE1{A-E}2{A-D}3{A-C}_ROTULO
+nome_questao_CP1{A-D}2{A-D}3{A-D}_DSP1{A-C}2{A-C}3{A-D}_PEE1{A-E}2{A-E}3{A-C}_ROTULO
 ```
 
 **Questão correta:**
 ```
-nome_questao_CP1{A|B}2{A|B|C}_DSP1{A|B|C}_PEE1{A-E}2{A-D}3{A-C}_ROTULO
+nome_questao_CP1{A-D}2{A-D}3{A-D}_DSP1{A-C}_PEE1{A-E}2{A-E}3{A-C}_ROTULO
 ```
 
 O rótulo curto (opcional, máx. 25 chars) é normalizado: sem acentos, sem caracteres especiais, espaços → `_`, tudo maiúsculo.
+
+Novos registros usam `schema_version: 2` e `questionario_version: "2026-06-novo-questionario"`. Registros sem versão são tratados como schema 1 e continuam disponíveis no histórico.
 
 ---
 
